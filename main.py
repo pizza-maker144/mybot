@@ -1,14 +1,21 @@
+import asyncio
 import os
 import sqlite3
-import aiohttp
-import asyncio
 
-from dotenv import load_dotenv
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
+import aiohttp
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
-from aiogram.types import BotCommand, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import (
+    BotCommand,
+    CallbackQuery,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    Message,
+)
+from dotenv import load_dotenv
+
 load_dotenv()
 TOKEN = os.getenv("TOKEN")
 
