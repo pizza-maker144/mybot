@@ -25,6 +25,7 @@ dp = Dispatcher()
 GEO_URL = "https://geocoding-api.open-meteo.com/v1/search"
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 APP_URL = "https://pizza-maker144.github.io/funnyclicker/app.html"
+TRIP_URL = "https://pizza-maker144.github.io/funnyclicker/trip.html"
 
 
 @dp.message(Command("weather"))
@@ -222,14 +223,24 @@ async def menu(message: Message):
     await message.answer("Выбери кнопку:", reply_markup=kb)
 
 
+def webapp_keyboard(url, text="Открыть"):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=text, web_app=WebAppInfo(url=url))]]
+    )
+
+
 @dp.message(Command("app"))
 async def app(message: Message):
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Открыть приложение", web_app=WebAppInfo(url=APP_URL))]
-        ]
+    await message.answer(
+        "Мини-приложение:", reply_markup=webapp_keyboard(APP_URL, "Открыть приложение")
     )
-    await message.answer("Мини-приложение:", reply_markup=kb)
+
+
+@dp.message(Command("trip"))
+async def trip(message: Message):
+    await message.answer(
+        "Калькулятор отпуска:", reply_markup=webapp_keyboard(TRIP_URL, "Посчитать")
+    )
 
 
 @dp.callback_query(F.data == "hello")
@@ -267,6 +278,7 @@ async def main():
         BotCommand(command="name", description="Знакомство"),
         BotCommand(command="menu", description="Кнопки"),
         BotCommand(command="app", description="Мини-приложение"),
+        BotCommand(command="trip", description="Калькулятор отпуска"),
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="help", description="Что я умею"),
     ])

@@ -12,7 +12,8 @@ Telegram-бот на aiogram 3 (Python 3.13), учебный проект.
 - `/note <текст>` — добавить заметку; `/note` без текста — FSM-запрос, следующее сообщение станет заметкой (SQLite, у каждого пользователя свои)
 - `/notes` — список заметок
 - `/del <id>` — удалить заметку; `/del` без аргумента — инлайн-список заметок, нажатие удаляет
-- `/app` — кнопка с Telegram Mini App (https://pizza-maker144.github.io/funnyclicker/app.html)
+- `/app` — кнопка с Telegram Mini App: кликер (https://pizza-maker144.github.io/funnyclicker/app.html)
+- `/trip` — кнопка с Mini App: калькулятор бюджета отпуска (https://pizza-maker144.github.io/funnyclicker/trip.html)
 - `/cancel` — выйти из FSM-состояния
 - любое другое сообщение — эхо
 
