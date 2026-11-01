@@ -103,6 +103,19 @@ def delete_note(user_id, note_id):
     return deleted > 0
 
 
+def note_button_text(text):
+    return text if len(text) <= 40 else text[:37] + "..."
+
+
+def notes_keyboard(rows):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=note_button_text(text), callback_data=f"del:{note_id}")]
+            for note_id, text in rows
+        ]
+    )
+
+
 class Form(StatesGroup):
     name = State()
     note = State()
@@ -142,13 +155,33 @@ async def notes(message: Message):
 @dp.message(Command("del"))
 async def del_note(message: Message):
     parts = message.text.split(maxsplit=1)
-    if len(parts) < 2 or not parts[1].isdigit():
-        await message.answer("Напиши: /del 3")
+    if len(parts) >= 2 and parts[1].strip().isdigit():
+        if delete_note(message.from_user.id, int(parts[1])):
+            await message.answer("Удалено")
+        else:
+            await message.answer("Такой заметки нет")
         return
-    if delete_note(message.from_user.id, int(parts[1])):
-        await message.answer("Удалено")
+    rows = get_notes(message.from_user.id)
+    if not rows:
+        await message.answer("Заметок нет")
+        return
+    await message.answer("Выбери заметку для удаления:", reply_markup=notes_keyboard(rows))
+
+
+@dp.callback_query(F.data.startswith("del:"))
+async def on_del(callback: CallbackQuery):
+    note_id = int(callback.data.split(":", 1)[1])
+    if delete_note(callback.from_user.id, note_id):
+        await callback.answer("Удалено")
     else:
-        await message.answer("Такой заметки нет")
+        await callback.answer("Уже удалено")
+    rows = get_notes(callback.from_user.id)
+    if rows:
+        await callback.message.edit_text(
+            "Выбери заметку для удаления:", reply_markup=notes_keyboard(rows)
+        )
+    else:
+        await callback.message.edit_text("Все заметки удалены")
 
 
 @dp.message(Command("cancel"))
