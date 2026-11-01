@@ -13,6 +13,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     Message,
+    WebAppInfo,
 )
 from dotenv import load_dotenv
 
@@ -23,6 +24,7 @@ dp = Dispatcher()
 
 GEO_URL = "https://geocoding-api.open-meteo.com/v1/search"
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
+APP_URL = "https://pizza-maker144.github.io/funnyclicker/app.html"
 
 
 @dp.message(Command("weather"))
@@ -220,6 +222,16 @@ async def menu(message: Message):
     await message.answer("Выбери кнопку:", reply_markup=kb)
 
 
+@dp.message(Command("app"))
+async def app(message: Message):
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Открыть приложение", web_app=WebAppInfo(url=APP_URL))]
+        ]
+    )
+    await message.answer("Мини-приложение:", reply_markup=kb)
+
+
 @dp.callback_query(F.data == "hello")
 async def on_hello(callback: CallbackQuery):
     await callback.answer("Привет!")
@@ -254,6 +266,7 @@ async def main():
         BotCommand(command="weather", description="Погода"),
         BotCommand(command="name", description="Знакомство"),
         BotCommand(command="menu", description="Кнопки"),
+        BotCommand(command="app", description="Мини-приложение"),
         BotCommand(command="start", description="Запустить бота"),
         BotCommand(command="help", description="Что я умею"),
     ])
