@@ -57,6 +57,10 @@ DB = "bot.db"
 def init_db():
     conn = sqlite3.connect(DB)
     conn.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)")
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS notes ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, text TEXT NOT NULL)"
+    )
     conn.commit()
     conn.close()
 
@@ -71,6 +75,34 @@ def save_user(user_id, name):
     conn.commit()
     conn.close()
 
+
+def add_note(user_id, text):
+    conn = sqlite3.connect(DB)
+    cur = conn.execute("INSERT INTO notes (user_id, text) VALUES (?, ?)", (user_id, text))
+    note_id = cur.lastrowid
+    conn.commit()
+    conn.close()
+    return note_id
+
+
+def get_notes(user_id):
+    conn = sqlite3.connect(DB)
+    rows = conn.execute(
+        "SELECT id, text FROM notes WHERE user_id = ? ORDER BY id", (user_id,)
+    ).fetchall()
+    conn.close()
+    return rows
+
+
+def delete_note(user_id, note_id):
+    conn = sqlite3.connect(DB)
+    cur = conn.execute("DELETE FROM notes WHERE id = ? AND user_id = ?", (note_id, user_id))
+    deleted = cur.rowcount
+    conn.commit()
+    conn.close()
+    return deleted > 0
+
+
 class Form(StatesGroup):
     name = State()
 
@@ -83,6 +115,39 @@ async def my_name(message: Message):
         await message.answer(f"Тебя зовут: {row[0]}")
     else:
         await message.answer("Я тебя ещё не знаю. Напиши /name")
+
+
+@dp.message(Command("note"))
+async def note(message: Message):
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2 or not parts[1].strip():
+        await message.answer("Напиши: /note купить хлеб")
+        return
+    note_id = add_note(message.from_user.id, parts[1].strip())
+    await message.answer(f"Сохранено #{note_id}")
+
+
+@dp.message(Command("notes"))
+async def notes(message: Message):
+    rows = get_notes(message.from_user.id)
+    if not rows:
+        await message.answer("Заметок пока нет. Добавь: /note текст")
+        return
+    lines = [f"{note_id}. {text}" for note_id, text in rows]
+    await message.answer("\n".join(lines))
+
+
+@dp.message(Command("del"))
+async def del_note(message: Message):
+    parts = message.text.split(maxsplit=1)
+    if len(parts) < 2 or not parts[1].isdigit():
+        await message.answer("Напиши: /del 3")
+        return
+    if delete_note(message.from_user.id, int(parts[1])):
+        await message.answer("Удалено")
+    else:
+        await message.answer("Такой заметки нет")
+
 
 @dp.message(Command("name"))
 async def ask_name(message: Message, state: FSMContext):
@@ -102,7 +167,9 @@ async def start(message: Message):
 
 @dp.message(Command("help"))
 async def help_cmd(message: Message):
-    await message.answer("Я умею: /start, /help и повторяю твои сообщения.") 
+    await message.answer(
+        "Я умею: /start, /help, /menu, /name, /myname, /weather, /note, /notes, /del"
+    )
 @dp.message(Command("menu"))
 async def menu(message: Message):
     kb = InlineKeyboardMarkup(inline_keyboard=[
@@ -131,6 +198,9 @@ async def main():
     init_db()
     bot = Bot(token=TOKEN)
     await bot.set_my_commands([
+        BotCommand(command="note", description="Добавить заметку"),
+        BotCommand(command="notes", description="Мои заметки"),
+        BotCommand(command="del", description="Удалить заметку"),
         BotCommand(command="myname", description="Моё имя"),
         BotCommand(command="weather", description="Погода"),
         BotCommand(command="name", description="Знакомство"),
