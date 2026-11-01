@@ -105,6 +105,7 @@ def delete_note(user_id, note_id):
 
 class Form(StatesGroup):
     name = State()
+    note = State()
 
 @dp.message(Command("myname"))
 async def my_name(message: Message):
@@ -118,13 +119,14 @@ async def my_name(message: Message):
 
 
 @dp.message(Command("note"))
-async def note(message: Message):
+async def note(message: Message, state: FSMContext):
     parts = message.text.split(maxsplit=1)
-    if len(parts) < 2 or not parts[1].strip():
-        await message.answer("Напиши: /note купить хлеб")
+    if len(parts) >= 2 and parts[1].strip():
+        note_id = add_note(message.from_user.id, parts[1].strip())
+        await message.answer(f"Сохранено #{note_id}")
         return
-    note_id = add_note(message.from_user.id, parts[1].strip())
-    await message.answer(f"Сохранено #{note_id}")
+    await state.set_state(Form.note)
+    await message.answer("Напиши текст заметки:")
 
 
 @dp.message(Command("notes"))
@@ -147,6 +149,12 @@ async def del_note(message: Message):
         await message.answer("Удалено")
     else:
         await message.answer("Такой заметки нет")
+
+
+@dp.message(Command("cancel"))
+async def cancel(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Отменено")
 
 
 @dp.message(Command("name"))
@@ -190,6 +198,13 @@ async def on_bye(callback: CallbackQuery):
     await callback.answer("Пока!")
     await callback.message.answer("Ты нажал «Пока»")
 
+@dp.message(Form.note)
+async def save_note(message: Message, state: FSMContext):
+    note_id = add_note(message.from_user.id, message.text.strip())
+    await state.clear()
+    await message.answer(f"Сохранено #{note_id}")
+
+
 @dp.message()
 async def echo(message: Message):
     await message.answer(f"Ты написал: {message.text}")
@@ -201,6 +216,7 @@ async def main():
         BotCommand(command="note", description="Добавить заметку"),
         BotCommand(command="notes", description="Мои заметки"),
         BotCommand(command="del", description="Удалить заметку"),
+        BotCommand(command="cancel", description="Отменить действие"),
         BotCommand(command="myname", description="Моё имя"),
         BotCommand(command="weather", description="Погода"),
         BotCommand(command="name", description="Знакомство"),
