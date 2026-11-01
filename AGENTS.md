@@ -26,6 +26,7 @@ venv\Scripts\python.exe -m pip install -r requirements.txt
 ```powershell
 .\venv\Scripts\python.exe -m py_compile main.py
 .\venv\Scripts\python.exe -m ruff check .
+.\venv\Scripts\python.exe -m pytest -q
 ```
 
 ## Правила
